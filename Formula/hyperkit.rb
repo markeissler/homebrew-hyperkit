@@ -36,11 +36,24 @@
       url "https://github.com/moby/hyperkit.git", :branch => 'master'
     end
 
+    # bottle do
+    #   root_url 'http://dl.bintray.com/markeissler/homebrew/hyperkit'
+    #   cellar :any
+    #   sha256 "678fc45cc513a5fe7f2c91f24de360d6f2e1a67c5a789b6ce958624b8b7f8a6b" => :yosemite
+    #   sha256 'b9cef372d7ca64cc2b961c625ecaa43b9361df4d0d021710add1b96aae8a019e' => :mavericks
+    #   sha256 "07b7932b52725d4ba3dcf5f02c654f890568827fe56d4c132752753dc4445ef6" => :mountain_lion
+    # end
+
+    resource "tinycorelinux" do
+      url "https://dl.bintray.com/markeissler/homebrew/hyperkit-kernel/tinycorelinux_8.x.tar.gz"
+      sha256 "560c1d2d3a0f12f9b1200eec57ca5c1d107cf4823d3880e09505fcd9cd39141a"
+    end
+
     depends_on "opam" => :run
     depends_on "libev" => :run
 
     def install
-      ohai "... Installing dependencies with OPAM. This might take a while."
+      ohai "... Installing hyperkit dependencies with OPAM. This might take a while."
 
       system <<-CMD.undent
         export OPAMYES=1
@@ -56,7 +69,7 @@
         if build.head?
           version, sha1 = Hyperkit.version_from_git(self.buildpath, "master")
         else
-          # version, sha1 = Hyperkit.version_from_url(self.stable.url)
+          # no need to re-parse version, we already set it in stable declaration above
           version, sha1 = self.stable.version.to_s.split("-")
         end
         if (version.nil? or version.empty? or sha1.nil? or sha1.empty?)
@@ -72,46 +85,19 @@
     end
 
     test do
-      # `test do` will create, run in and delete a temporary directory.
       #
-      # This test will fail and we won't accept that! It's enough to just replace
-      # "false" with the main program this formula installs, but it'd be nice if you
-      # were more thorough. Run the test with `brew test hyperkit`. Options passed
-      # to `brew install` such as `--HEAD` also need to be provided to `brew test`.
+      # Download tinycorelinux kernel and initrd, boot system, check for prompt.
       #
-      # The installed folder is not in the path, so use the entire path to any
-      # executables being tested: `system "#{bin}/program", "do", "something"`.
-      # system "false"
       ohai "... Running tests."
 
-      # @TODO: create a script to patch tinylinux
-      # @TODO: upload patched tinylinux vmlinuz and initrd.gz to bintray
-      # @TODO: update tinycore_install.sh to copy these resources in tmp so we can grab them for the test.
+      resource("tinycorelinux").stage do |context|
+        tmpdir = context.staging.tmpdir
+        path_resource_versioned = Dir.glob(tmpdir.join("tinycorelinux_[0-9]*"))[0]
+        FileUtils.cp(File.join(path_resource_versioned, "vmlinuz"), testpath)
+        FileUtils.cp(File.join(path_resource_versioned, "initrd.gz"), testpath)
+      end
 
-      (testpath/"tinycore_install.sh").write <<-EOS.undent
-        #!/usr/bin/env sh
-        set -e
-
-        # These are binaries from a mirror of
-        #  http://tinycorelinux.net
-        # with the following patch applied:
-        # Upstream source is available http://www.tinycorelinux.net/6.x/x86/release/src/
-        #BASE_URL="http://www.tinycorelinux.net/"
-
-        BASE_URL="http://distro.ibiblio.org/tinycorelinux/"
-
-        # TMP_DIR=$(mktemp -d -t hyperkit)
-        TMP_DIR="#{testpath}"
-
-        echo Downloading tinycore linux (patched)
-        #curl -s -o vmlinuz "${BASE_URL}/6.x/x86/release/distribution_files/vmlinuz64"
-        #curl -s -o "${TMP_DIR}"/initrd.gz "${BASE_URL}/6.x/x86/release/distribution_files/core.gz"
-        cp /tmp/hyperkit-imgs/vmlinuz "${TMP_DIR}/vmlinuz"
-        cp /tmp/hyperkit-imgs/initrd.gz "${TMP_DIR}/initrd.gz"
-      EOS
-
-      system "sh", "tinycore_install.sh"
-
+      # boot tinycorelinux and check for a prompt
       (testpath/"test_hyperkit.exp").write <<-EOS.strip_heredoc
         #!/usr/bin/env expect -d
 
