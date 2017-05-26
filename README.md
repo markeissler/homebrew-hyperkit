@@ -55,7 +55,7 @@ __homebrew-hyperkit__ is the work of __Mark Eissler__.
 
 ## License
 
-__homebrew-hyperkit__ is licensed under the MIT open source license.
+__homebrew-hyperkit__ is licensed under the 2-clause BSD open source license.
 
 ---
 Without open source, there would be no Internet as we know it today.
