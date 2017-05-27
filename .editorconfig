@@ -11,5 +11,8 @@ indent_size = 2
 [*.{rb,rake}]
 indent_size = 2
 
+[*.rb]
+insert_final_newline = false
+
 [*.yml]
 indent_size = 2
