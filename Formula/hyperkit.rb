@@ -57,18 +57,16 @@ class Hyperkit < Formula
     ohai "... Dependencies installed."
 
     # update the Makefile to set version to YYYYmmdd-sha1
-    unless build.bottle?
-      if build.head?
-        version, sha1 = Hyperkit.version_from_git(buildpath, "master")
-      else
-        # no need to re-parse version, we already set it in stable declaration above
-        version, sha1 = stable.version.to_s.split("-")
-      end
-      if version.nil? || version.empty? || sha1.nil? || sha1.empty?
-        odie "Couldn't figure out which version we're building!"
-      end
-      update_makefile(buildpath, version, sha1)
+    if build.head?
+      version, sha1 = Hyperkit.version_from_git(buildpath, "master")
+    else
+      # no need to re-parse version, we already set it in stable declaration above
+      version, sha1 = stable.version.to_s.split("-")
     end
+    if version.nil? || version.empty? || sha1.nil? || sha1.empty?
+      odie "Couldn't figure out which version we're building!"
+    end
+    update_makefile(buildpath, version, sha1)
 
     system "make"
 
