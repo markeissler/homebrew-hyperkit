@@ -24,17 +24,17 @@ class Hyperkit < Formula
     version(Hyperkit.version_from_url(url).join("-"))
   end
 
+  bottle do
+    root_url "http://dl.bintray.com/markeissler/homebrew/bottles"
+    cellar :any_skip_relocation
+    sha256 "6de3049ceb63dc441e9cd9402884b05d27dbf2e3664014a2550d1454ef1cb657" => :sierra
+    sha256 "caab21f5aa36d9d240fb0399b8b30be4e5d3b34b1107b70b7886a8ed47fbd22f" => :el_capitan
+    sha256 "d673655dce12caa88e22b356ec5109211e8b12e0ba4e9d501c9737a6966a6922" => :yosemite
+  end
+
   head do
     url "https://github.com/moby/hyperkit.git", :branch => "master"
   end
-
-  # bottle do
-  #   root_url 'http://dl.bintray.com/markeissler/homebrew/hyperkit'
-  #   cellar :any
-  #   sha256 "678fc45cc513a5fe7f2c91f24de360d6f2e1a67c5a789b6ce958624b8b7f8a6b" => :yosemite
-  #   sha256 'b9cef372d7ca64cc2b961c625ecaa43b9361df4d0d021710add1b96aae8a019e' => :mavericks
-  #   sha256 "07b7932b52725d4ba3dcf5f02c654f890568827fe56d4c132752753dc4445ef6" => :mountain_lion
-  # end
 
   depends_on "opam" => :run
   depends_on "libev" => :run
