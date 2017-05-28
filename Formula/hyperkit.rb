@@ -4,14 +4,6 @@ class Hyperkit < Formula
   desc "Lightweight virtualization hypervisor for MacOS"
   homepage "https://github.com/moby/hyperkit"
 
-  # A more flexible version of undent, compress removes newlines
-  class String
-    def strip_heredoc(compress = false)
-      stripped = gsub(/^#{scan(/^\s*/).min_by(&:length)}/, "")
-      compress ? stripped.tr(/\n/, " ").chop : stripped
-    end
-  end
-
   def self.version_from_git(build_path, branch = "master")
     command = <<-CMD.undent
       \\cd "#{build_path}"; \
@@ -98,7 +90,7 @@ class Hyperkit < Formula
     end
 
     # boot tinycorelinux and check for a prompt
-    (testpath/"test_hyperkit.exp").write <<-EOS.strip_heredoc
+    (testpath/"test_hyperkit.exp").write strip_heredoc(<<-EOS)
       #!/usr/bin/env expect -d
 
       set KERNEL "./vmlinuz"
@@ -137,8 +129,14 @@ class Hyperkit < Formula
 
   private
 
+  # A more flexible version of undent, compress removes newlines
+  def strip_heredoc(text, compress = false)
+    stripped = text.gsub(/^#{text.scan(/^\s*/).min_by(&:length)}/, "")
+    compress ? stripped.tr("\n", " ").chop : stripped
+  end
+
   def update_makefile(build_path, version, sha1)
-    system <<-CMD.strip_heredoc(true)
+    system strip_heredoc(<<-CMD, true)
       \\sed -i".bak"
       -e "s/GIT_VERSION[\ ]*:=.*/GIT_VERSION := #{version}-#{sha1}/g"
       -e "s/GIT_VERSION_SHA1[\ ]:=.*/GIT_VERSION_SHA1 := #{sha1}/g"
