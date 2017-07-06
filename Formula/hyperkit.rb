@@ -69,9 +69,9 @@ class Hyperkit < Formula
   bottle do
     root_url "http://dl.bintray.com/markeissler/homebrew/bottles"
     cellar :any_skip_relocation
-    sha256 "6de3049ceb63dc441e9cd9402884b05d27dbf2e3664014a2550d1454ef1cb657" => :sierra
-    sha256 "caab21f5aa36d9d240fb0399b8b30be4e5d3b34b1107b70b7886a8ed47fbd22f" => :el_capitan
-    sha256 "d673655dce12caa88e22b356ec5109211e8b12e0ba4e9d501c9737a6966a6922" => :yosemite
+    sha256 "5cfa72e41bad9d812206a9850d7e6e63185ce1bffa0d1718beb5f09734d9bb29" => :sierra
+    sha256 "32162cf81ca23a27f97e0fe0727ecc6f3dcf179716ac77fb9fbc38883e3d114f" => :el_capitan
+    sha256 "0fb4cf0f9f8d81eb1be99d620b454ab14ec8680237f6938db095b032874e821d" => :yosemite
   end
 
   head do
