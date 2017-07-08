@@ -2,11 +2,10 @@
 
 ## 1.0.0 / 2017-07-06
 
-Initial release of __homebrew-hyperkit__ formula for official [Homebrew](https://brew.sh) formula repo.
+Initial stable release of __homebrew-hyperkit__ formula.
 
-That means you can now do a simple `brew install hyperkit` and be off to the races. No more Tap!
-
-> This release switches over to the newly introduced Moby/Hyperkit version tags.
+> This release switches over to the newly introduced Moby/HyperKit data-based
+version tags.
 
 ### Short list of commit messages
 
