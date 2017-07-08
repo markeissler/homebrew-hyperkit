@@ -8,17 +8,26 @@ on top of the [Hypervisor.Framework](https://developer.apple.com/documentation/h
 Run the following in your command-line:
 
 ```sh
+prompt> brew tap markeissler/hyperkit
+```
+
+Once the tap has been installed, you can proceed with `hyperkit` installation by running the following command:
+
+```sh
 prompt> brew install hyperkit
 ```
 
-That's all there is to it.
+That's all there is to it. In most cases, a `hyperkit` binary will be installed from a pre-compiled binary specific for
+your platform. With a prepared development environment you can also build the current stable or HEAD releases locally.
+Refer to the [Building HyperKit](#build-hyperkit) section below for instructions.
 
 ## Usage
 
 ### Determing the Installed HyperKit Version
 
-[HyperKit](https://github.com/moby/hyperkit) does not comply with the [Semantic Versioning](http://semver.org/) release
-numbering scheme (the familiar X.y.z format); consequently, the versioning scheme for this utility may appear a bit odd:
+[HyperKit](https://github.com/moby/hyperkit) uses a versioning scheme based on the date of the release milestone. For
+this standalone version the specific git commit hash is also provided in parantheses to avoid abiguity in the case that
+a release is tagged multiple times with the same date.
 
 ```sh
 prompt> hyperkit -v
@@ -34,6 +43,26 @@ There are two parts to the version number:
 |:---------------|:-------------------------------------------------------|
 |__v0.20170425__ | Version number.                                        |
 |__(a9c368b)__   | Short form commit hash (sha1) for the specific release |
+
+### Building HyperKit
+
+To build `hyperkit` locally you will need to make sure you have development dependencies install (either a full Xcode
+development environment or at least the command line tools).
+
+Build stable:
+
+```sh
+prompt> brew install --build-from-source hyperkit
+```
+
+Build HEAD:
+
+```sh
+prompt> brew install --HEAD hyperkit
+```
+
+Beware that building `HEAD` may result in a non-functional install since it consists of the latest code contributions
+from the `hyperkit` team.
 
 ## Testing
 
@@ -57,7 +86,15 @@ To remove `hyperkit` from your system run the following commands:
 
 ```sh
 prompt> brew uninstall hyperkit
+prompt> brew untap markeissler/hyperkit
 ```
+
+## Tap instead of a regular Homebrew formula
+
+When you use the `brew tap` command it means you are searching for formulas that are stored in other repositories, that
+is, outside of the main __Homebrew__ repository. This formula is currently maintained in its own __Tap__ due to the
+greater level of flexibility it affords the maintainers with regard to ongoing development, testing, future automation
+of builds.
 
 ## Bugs and such
 
