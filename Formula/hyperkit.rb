@@ -1,43 +1,24 @@
 class Hyperkit < Formula
-  require "open3"
-
-  desc "Lightweight virtualization hypervisor for MacOS"
+  desc "Lightweight virtualization hypervisor for macOS"
   homepage "https://github.com/moby/hyperkit"
+  url "https://github.com/moby/hyperkit.git",
+    :tag => "v0.20170425",
+    :revision => "a9c368bed6003bee11d2cf646ed1dcf3d350ec8c"
 
-  def self.version_from_git(build_path, branch = "master")
-    command = <<-CMD.undent
-      \\cd "#{build_path}"; \
-      \\git log -1 --pretty=format:"%cd-%h" --date=short #{branch}
-    CMD
-    version_string, _stderr, _status = Open3.capture3(command.chomp)
-    version_string.split("-", 3).join("").split("-")
-  end
-
-  def self.version_from_url(url)
-    url.scan(/hyperkit-([\d]{8})-([A-Fa-f\d]+).tar.gz$/).first
-  end
-
-  stable do
-    url "https://dl.bintray.com/markeissler/homebrew/hyperkit/hyperkit-20170515-fa78d94.tar.gz"
-    sha256 "5bdb9e9bdfd00813c0f01c2b918a7af1e15c79e08b83c8369995592cc3999054"
-    # correct version auto-detection fails, so we set it explicitly
-    version(Hyperkit.version_from_url(url).join("-"))
-  end
+  head "https://github.com/moby/hyperkit.git"
 
   bottle do
     root_url "http://dl.bintray.com/markeissler/homebrew/bottles"
     cellar :any_skip_relocation
-    sha256 "6de3049ceb63dc441e9cd9402884b05d27dbf2e3664014a2550d1454ef1cb657" => :sierra
-    sha256 "caab21f5aa36d9d240fb0399b8b30be4e5d3b34b1107b70b7886a8ed47fbd22f" => :el_capitan
-    sha256 "d673655dce12caa88e22b356ec5109211e8b12e0ba4e9d501c9737a6966a6922" => :yosemite
+    sha256 "5cfa72e41bad9d812206a9850d7e6e63185ce1bffa0d1718beb5f09734d9bb29" => :sierra
+    sha256 "32162cf81ca23a27f97e0fe0727ecc6f3dcf179716ac77fb9fbc38883e3d114f" => :el_capitan
+    sha256 "0fb4cf0f9f8d81eb1be99d620b454ab14ec8680237f6938db095b032874e821d" => :yosemite
   end
 
-  head do
-    url "https://github.com/moby/hyperkit.git", :branch => "master"
-  end
-
-  depends_on "opam" => :run
-  depends_on "libev" => :run
+  depends_on "ocaml" => :build
+  depends_on "opam" => :build
+  depends_on "aspcud" => :build
+  depends_on "libev" => :build
 
   resource "tinycorelinux" do
     url "https://dl.bintray.com/markeissler/homebrew/hyperkit-kernel/tinycorelinux_8.x.tar.gz"
@@ -45,28 +26,37 @@ class Hyperkit < Formula
   end
 
   def install
-    ohai "... Installing hyperkit dependencies with OPAM. This might take a while."
+    ENV["OPAMROOT"] = buildpath/"opamroot"
+    ENV["OPAMYES"] = "1"
+    system "opam", "init", "--no-setup"
+    system "opam", "install", "uri", "qcow.0.10.0", "qcow-tool",
+                   "mirage-block-unix.2.7.0", "conf-libev", "logs", "fmt",
+                   "mirage-unix", "prometheus-app"
 
-    system <<-CMD.undent
-      export OPAMYES=1
-      opam init
-      eval "$(opam config env)"
-      opam install uri qcow.0.9.5 mirage-block-unix.2.7.0 conf-libev logs fmt mirage-unix
-    CMD
-
-    ohai "... Dependencies installed."
-
-    # update the Makefile to set version to YYYYmmdd-sha1
+    # update the Makefile to set version to X.YYYYmmdd (sha1)
     if build.head?
-      version, sha1 = Hyperkit.version_from_git(buildpath, "master")
+      command = <<-CMD.undent
+        \\cd "#{buildpath}"; \
+        \\git log -1 --pretty=format:"vHEAD.%cd-%h" --date=short "master"
+      CMD
+      version_string = Utils.popen_read(command.to_s).chomp
+      version, sha1 = version_string.split("-", 3).join("").split("-")
     else
-      # no need to re-parse version, we already set it in stable declaration above
-      version, sha1 = stable.version.to_s.split("-")
+      # grab version and sha1 from stable resource specs
+      version = stable.specs[:tag][0..-1]
+      sha1 = stable.specs[:revision][0..6]
     end
+
     if version.nil? || version.empty? || sha1.nil? || sha1.empty?
       odie "Couldn't figure out which version we're building!"
     end
-    update_makefile(buildpath, version, sha1)
+
+    quiet_system <<-CMD.undent
+      \\sed -i".bak" \
+      -e "s/GIT_VERSION[\ ]*:=.*/GIT_VERSION := '#{version} (#{sha1})'/g" \
+      -e "s/GIT_VERSION_SHA1[\ ]:=.*/GIT_VERSION_SHA1 := '#{sha1}'/g" \
+      "#{buildpath}/Makefile"
+    CMD
 
     system "make"
 
@@ -75,11 +65,12 @@ class Hyperkit < Formula
   end
 
   test do
-    #
-    # Download tinycorelinux kernel and initrd, boot system, check for prompt.
-    #
-    ohai "... Running tests."
+    # simple test when not in a vm that supports guests (i.e. VT-x disabled)
+    unless Hardware::CPU.features.include? :vmx
+      return system bin/"hyperkit", "-version"
+    end
 
+    # download tinycorelinux kernel and initrd, boot system, check for prompt
     resource("tinycorelinux").stage do |context|
       tmpdir = context.staging.tmpdir
       path_resource_versioned = Dir.glob(tmpdir.join("tinycorelinux_[0-9]*"))[0]
@@ -87,8 +78,7 @@ class Hyperkit < Formula
       cp(File.join(path_resource_versioned, "initrd.gz"), testpath)
     end
 
-    # boot tinycorelinux and check for a prompt
-    (testpath/"test_hyperkit.exp").write strip_heredoc(<<-EOS)
+    (testpath/"test_hyperkit.exp").write <<-EOS.undent
       #!/usr/bin/env expect -d
 
       set KERNEL "./vmlinuz"
@@ -121,24 +111,6 @@ class Hyperkit < Formula
 
       puts "\\nPASS"
     EOS
-
     system "expect", "test_hyperkit.exp"
-  end
-
-  private
-
-  # A more flexible version of undent, compress removes newlines
-  def strip_heredoc(text, compress = false)
-    stripped = text.gsub(/^#{text.scan(/^\s*/).min_by(&:length)}/, "")
-    compress ? stripped.tr("\n", " ").chop : stripped
-  end
-
-  def update_makefile(build_path, version, sha1)
-    system strip_heredoc(<<-CMD, true)
-      \\sed -i".bak"
-      -e "s/GIT_VERSION[\ ]*:=.*/GIT_VERSION := #{version}-#{sha1}/g"
-      -e "s/GIT_VERSION_SHA1[\ ]:=.*/GIT_VERSION_SHA1 := #{sha1}/g"
-      "#{build_path}/Makefile"
-    CMD
   end
 end

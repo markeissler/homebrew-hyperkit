@@ -1,9 +1,7 @@
-# HyperKit Homebrew Tap (homebrew-hyperkit)
+# HyperKit Homebrew (homebrew-hyperkit)
 
->BETA: This is a test to determine viability of a brew formula for Hyperkit.
-
-This tap has been created to specifically install [HyperKit](https://github.com/moby/hyperkit), a MacOS hypervisor built
-on top of the Hypervisor.Framework.
+Install [HyperKit](https://github.com/moby/hyperkit), a MacOS hypervisor built
+on top of the [Hypervisor.Framework](https://developer.apple.com/documentation/hypervisor), with a simple `brew` command.
 
 ## Installation
 
@@ -19,16 +17,21 @@ Once the tap has been installed, you can proceed with `hyperkit` installation by
 prompt> brew install hyperkit
 ```
 
+That's all there is to it. In most cases, a `hyperkit` binary will be installed from a pre-compiled binary specific for
+your platform. With a prepared development environment you can also build the current stable or HEAD releases locally.
+Refer to the [Building HyperKit](#build-hyperkit) section below for instructions.
+
 ## Usage
 
 ### Determing the Installed HyperKit Version
 
-[HyperKit](https://github.com/moby/hyperkit) does not comply with the [Semantic Versioning](http://semver.org/) release
-numbering scheme (the familiar X.y.z format); consequently, the versioning scheme for this utility may appear a bit odd:
+[HyperKit](https://github.com/moby/hyperkit) uses a versioning scheme based on the date of the release milestone. For
+this standalone version the specific git commit hash is also provided in parantheses to avoid abiguity in the case that
+a release is tagged multiple times with the same date.
 
 ```sh
 prompt> hyperkit -v
-hyperkit: 20170515-fa78d94
+hyperkit: v0.20170425 (a9c368b)
 
 Homepage: https://github.com/docker/hyperkit
 License: BSD
@@ -36,10 +39,30 @@ License: BSD
 
 There are two parts to the version number:
 
-| Field Value | Description                                            |
-|:------------|:-------------------------------------------------------|
-|__20170515__ | Commit date for the for the specific release.          |
-|__fa77d94__  | Short form commit hash (sha1) for the specific release |
+| Field Value    | Description                                            |
+|:---------------|:-------------------------------------------------------|
+|__v0.20170425__ | Version number.                                        |
+|__(a9c368b)__   | Short form commit hash (sha1) for the specific release |
+
+### Building HyperKit
+
+To build `hyperkit` locally you will need to make sure you have development dependencies install (either a full Xcode
+development environment or at least the command line tools).
+
+Build stable:
+
+```sh
+prompt> brew install --build-from-source hyperkit
+```
+
+Build HEAD:
+
+```sh
+prompt> brew install --HEAD hyperkit
+```
+
+Beware that building `HEAD` may result in a non-functional install since it consists of the latest code contributions
+from the `hyperkit` team.
 
 ## Testing
 
@@ -69,14 +92,13 @@ prompt> brew untap markeissler/hyperkit
 ## Tap instead of a regular Homebrew formula
 
 When you use the `brew tap` command it means you are searching for formulas that are stored in other repositories, that
-is, outside of the main __Homebrew__ repository. The goal is to add a `hyperkit` formula to the main __Homebrew__
-respository but there's still some work to be done before that can happen.
-
-In the meantime, this tap exists for those that need it, want it.
+is, outside of the main __Homebrew__ repository. This formula is currently maintained in its own __Tap__ due to the
+greater level of flexibility it affords the maintainers with regard to ongoing development, testing, future automation
+of builds.
 
 ## Bugs and such
 
-Submit bugs by opening an issue on the [homebrew-hyperkit issues page](https://github.com/markeissler/homebrew-hyperkit/issues).
+Submit bugs __related to this formula__ by opening an issue on the [homebrew-hyperkit issues page](https://github.com/markeissler/homebrew-hyperkit/issues).
 
 ## Authors
 
